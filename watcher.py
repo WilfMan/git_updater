@@ -4,12 +4,15 @@ import os
 import time
 import subprocess
 import sys
+
 from logs import logger
 
 pidFile = tempfile.gettempdir() + '/daemonGitPushNotify.pid'
 info = tempfile.gettempdir() + '/.wathcher_info'
 run = 'RUN'
 stop = 'STOP'
+speech_server = 'festival'
+run_speech_server = 'festival --server'
 command = 'python %s/my_notify.py' % os.path.split(os.path.abspath(__file__))[0]
 
 
@@ -40,10 +43,27 @@ def pid_exists(pid):
         return output.split()[0]
 
 
+def proc_exist(name):
+    try:
+        process = subprocess.Popen(stdout=-1, args='ps x|grep %s|grep -v grep|grep -v Z' % name, shell=True)
+        output, _ = process.communicate()
+        process.poll()
+        if output:
+            return output.split()[0]
+    except:
+        return
+
+
 def main():
     logger.info('check status')
     status = check_status(info)
     logger.info('status= %s' % status)
+
+    logger.info('check %s server' % speech_server)
+    f_stat = proc_exist(speech_server)
+    if not f_stat:
+        subprocess.Popen(run_speech_server.split(' '))
+
     if status == run:
         pid = get_pid(pidFile)
         subprocess.Popen('kill %s' % pid, shell=True)

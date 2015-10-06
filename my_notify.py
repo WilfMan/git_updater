@@ -104,7 +104,7 @@ class BaseApp(object):
     def create_icon(self):
         br = []
         for repo in self.opt_repository:
-            br.append(['Check: %s' % repo.split('/')[-1], self.call_back_menu, repo])
+            br.append(['Check: %s' % repo.split('/')[-1], self.call_back_menu, (repo, repo.split('/')[-1])])
         if os.path.exists(self.img_path):
             self.icon = Icon(self.img_path, br)
             self.icon.reload_command = 'kill %s' % os.getpid()
@@ -133,14 +133,17 @@ class BaseApp(object):
     # @staticmethod
     def call_back_fire(self, notif, action, data=None):
         self.log.info('callback %s,   %s' % (action, data))
-        tr = threading.Thread(target=pull_all_branches, args=(data, ))
+        tr = threading.Thread(target=pull_all_branches, args=(data,))
         tr.setDaemon(1)
         tr.start()
+        self.fire_notify('check %s' % data)
+        self.say(['say_en', '"git. pull. repo"'])
 
-    def call_back_menu(self, *a):
+    def call_back_menu(self, a):
         self.log.info('menu: %s' % str(a))
         self.run_in_thread(self.update_branches, a[0])
         self.log.info('end update exit menu')
+        self.say(['say_en', '"git. pull. repo. %s"' % a[1], ])
 
     def empty_cb(self, n):
         self.log.info('closed notify msg')
@@ -149,6 +152,7 @@ class BaseApp(object):
     def fire_notify(self, msg='', title='GitPushNotify', add_callback=None, path=None):
         # raise Exception(999)
         Notify.init("New commit")
+
         self.log.info('Called fireNotify()')
         try:
             # n = notify2.Notification(title, msg, '')
@@ -239,9 +243,21 @@ class BaseApp(object):
         if count_commits:
             message += '...\n%s new commit(s)\n\n' % count_commits
             self.fire_notify(message, add_callback=True, path=repository_path)
+            self.say(['say_en', '"get. new. commit"'])
 
         self.log.info('Count commits: %s', count_commits)
         self.log.info('End check()')
+
+    def say(self, data):
+        self.run_in_thread(self._say, data)
+
+    @staticmethod
+    def _say(data):
+        try:
+            ss = subprocess.Popen(data)
+            ss.wait()
+        except:
+            logger.error(traceback.format_exc())
 
     def check(self, threaded=True):
         try:
@@ -265,4 +281,6 @@ if __name__ == '__main__':
     pid = str(os.getpid())
     with open(pidfile, 'w') as pf:
         pf.write("%s" % pid)
-    BaseApp().run()
+    bapp = BaseApp()
+    bapp.say(['say_en', '"start service"', ])
+    bapp.run()
