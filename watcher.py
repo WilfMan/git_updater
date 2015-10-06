@@ -7,11 +7,10 @@ import sys
 from logs import logger
 
 pidFile = tempfile.gettempdir() + '/daemonGitPushNotify.pid'
-env_name = 'GIT_UPDATE'
 info = tempfile.gettempdir() + '/.wathcher_info'
 run = 'RUN'
 stop = 'STOP'
-command = 'python /home/wilfman/notifaer/my_notify.py'
+command = 'python %s/my_notify.py' % os.path.split(os.path.abspath(__file__))[0]
 
 
 def check_status(path):
@@ -32,6 +31,7 @@ def get_pid(path):
             return int(p.read().strip())
     sys.exit(0)
 
+
 def pid_exists(pid):
     process = subprocess.Popen(stdout=-1, args='ps x|grep %s|grep -v grep' % pid, shell=True)
     output, _ = process.communicate()
@@ -39,27 +39,33 @@ def pid_exists(pid):
     if output:
         return output.split()[0]
 
-logger.info('check status')
-status = check_status(info)
-logger.info('status= %s' % status)
-if status == run:
-    pid = get_pid(pidFile)
-    subprocess.Popen('kill %s' % pid, shell=True)
-    wr(info, stop)
-    sys.exit(0)
-else:
-    wr(info, run)
 
-while check_status(info) != stop:
-    if os.path.exists(pidFile):
+def main():
+    logger.info('check status')
+    status = check_status(info)
+    logger.info('status= %s' % status)
+    if status == run:
         pid = get_pid(pidFile)
+        subprocess.Popen('kill %s' % pid, shell=True)
+        wr(info, stop)
+        sys.exit(0)
+    else:
+        wr(info, run)
 
-        if pid_exists(pid):
-            time.sleep(1)
-            # print 1
-            continue
+    while check_status(info) != stop:
+        if os.path.exists(pidFile):
+            pid = get_pid(pidFile)
 
-    logger.info('no tartget procces  try restart')
-    subprocess.Popen(command.split(' '))
-    print 'Fire!!!'
-    time.sleep(1)
+            if pid_exists(pid):
+                time.sleep(1)
+                # print 1
+                continue
+
+        logger.info('no tartget procces  try restart')
+        subprocess.Popen(command.split(' '))
+        print 'Fire!!!'
+        time.sleep(1)
+
+
+if __name__ == '__main__':
+    main()
