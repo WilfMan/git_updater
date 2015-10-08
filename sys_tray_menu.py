@@ -65,6 +65,7 @@ class Icon(object):
                 new_p_buf = self.put_text(trayPixbuf, '%s' % a, 3, 3)
                 self.icon_.set_from_pixbuf(new_p_buf)
             except:
+                logger.error(traceback.format_exc())
                 self.icon_.set_from_file(self.icon_img)
             a -= 1
             time.sleep(1)
@@ -87,8 +88,8 @@ class Icon(object):
         context.show_text(('%s' % text).zfill(2))
 
         # get the resulting pixbuf
-        surface = context.get_target()
-        pixbuf = Gdk.pixbuf_get_from_surface(surface, 0, 0, surface.get_width(), surface.get_height())
+        surface2 = context.get_target()
+        pixbuf = Gdk.pixbuf_get_from_surface(surface2, 0, 0, surface2.get_width(), surface2.get_height())
 
         return pixbuf
 

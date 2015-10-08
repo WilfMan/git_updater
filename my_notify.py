@@ -73,7 +73,7 @@ class BaseApp(object):
     def run(self):
         while self._running:
             try:
-                self.run_in_thread(self.updater)
+                self.run_in_thread(self.updater, daemon='no')
                 self.create_icon()
                 Gdk.threads_init()
                 gtk.main()
@@ -124,7 +124,8 @@ class BaseApp(object):
                 join = k.pop('join')
             self.log.info(str(k))
             tr = threading.Thread(target=target, args=a, kwargs=k)
-            tr.setDaemon(1)
+            if k.pop('daemon') != 'no':
+                tr.setDaemon(1)
             tr.start()
             self.log.info('join: %s' % join)
             if join:
@@ -137,9 +138,7 @@ class BaseApp(object):
     # @staticmethod
     def call_back_fire(self, notif, action, data=None):
         self.log.info('callback %s,   %s' % (action, data))
-        tr = threading.Thread(target=pull_all_branches, args=(data,))
-        tr.setDaemon(1)
-        tr.start()
+        self.run_in_thread(pull_all_branches, data)
         self.fire_notify('check %s' % data)
         self.say(['say_en', '"git. pull. repo"'])
 
