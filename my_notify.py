@@ -85,6 +85,10 @@ class BaseApp(object):
         while self._running:
             self.log.info('run check in thread by timeout %s' % self.opt_timeout)
             self.check(False)
+            if self.icon is not None:
+                # self.fire_notify('start countdown')
+                self.icon.tr = True
+                self.icon.count_down(self.opt_timeout)
             time.sleep(self.opt_timeout)
 
     def update_branches(self, path):
