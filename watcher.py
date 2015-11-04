@@ -63,7 +63,7 @@ def main():
     f_stat = proc_exist(speech_server)
     if not f_stat:
         subprocess.Popen(run_speech_server.split(' '))
-
+    logger.info('run notifar')
     if status == run:
         pid = get_pid(pidFile)
         subprocess.Popen('kill %s' % pid, shell=True)

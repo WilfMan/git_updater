@@ -10,12 +10,13 @@ import traceback
 import pygtk
 
 pygtk.require('2.0')
-import gtk
+from gi.repository import Gtk as gtk, Gdk as gdk
 
-settings = gtk.settings_get_default()
-gtk.gdk.threads_init()
-gtk.gdk.threads_enter()
-import gobject, Queue, sys, threading, thread
+# settings = gtk.settings_get_default()
+gdk.threads_init()
+gdk.threads_enter()
+from gi.repository import GObject  as gobject
+import  Queue, sys, threading, thread
 from functools import wraps
 import time
 
@@ -25,6 +26,7 @@ GuiPeriod = 500  # 0.5 sec
 IGuiPeriodCaller = Queue.Queue()
 IdleCaller = [None]
 IdleCallerLock = threading.Lock()
+
 
 # =================================
 # Reenterable locker
@@ -93,6 +95,7 @@ class CGtkLocker:
 
 
 GtkLocker = CGtkLocker()
+
 
 # ===========================================
 # Pre-locked wrapper

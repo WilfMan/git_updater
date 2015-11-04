@@ -1,12 +1,13 @@
 #! -*- coding: utf-8 -*-
 import cairo
 import os
-import sys
+import gui
 from gi.repository import Gtk as gtk, Gdk, GdkPixbuf
 from threading import Thread
 import time
 import traceback
 from logs import logger
+
 
 class Icon(object):
     def __init__(self, img, menu=None):
@@ -25,52 +26,71 @@ class Icon(object):
     @staticmethod
     def close_app(*args, **kwargs):
         print 'closing'
-        gtk.main_quit()
-        print 'close'
-        sys.exit()
+        os.system('kill -9 %s' % os.getpid())
 
     def make_menu(self, icon, event_button, event_time):
-        logger.info('create menu')
-        self.menu = gtk.Menu()
+        with gui.GtkLocker:
+            logger.info('create menu')
+            self.menu = gtk.Menu()
 
-        for name, callback, args in self.menu_item:
-            item = gtk.MenuItem(name)
-            item.set_label(name)
-            item.connect_object("activate", callback, args)
-            self.menu.append(item)
-        self.menu.show_all()
-        logger.info('menu created')
-        # def pos(menu, icon):
-        #     return gtk.StatusIcon.position_menu(menu, icon)
+            for name, callback, args in self.menu_item:
+                item = gtk.MenuItem(name)
+                item.set_label(name)
+                item.connect_object("activate", callback, args)
+                self.menu.append(item)
+            self.menu.show_all()
+            logger.info('menu created')
+            # def pos(menu, icon):
+            #     return gtk.StatusIcon.position_menu(menu, icon)
 
-        self.menu.popup(None, None, None, None, event_button, event_time)
+            self.menu.popup(None, None, None, None, event_button, event_time)
 
     def reload_(self, *args, **kwargs):
         os.system(self.reload_command)
         self.close_app()
 
+    @gui.IdleUpdater
+    def change_icon_file(self, file_):
+        # logger.info('update from file')
+        self.icon_.set_from_file(file_)
+
+    @gui.IdleUpdater
+    def change_icon_pixbuf(self, buf):
+        # logger.info('update from buf')
+        self.icon_.set_from_pixbuf(buf)
+
+
+    def set_icon(self, icon):
+        with gui.GtkLocker:
+            icon_ = gtk.StatusIcon()
+            icon_.set_from_file(icon)
+        return icon_
+
     def crearte_sys_tray_icon(self):
-        self.icon_ = gtk.StatusIcon()
-        self.icon_.set_from_file(self.icon_img)
+        self.icon_ = self.set_icon(self.icon_img)
         self.icon_.connect('popup-menu', self.make_menu)
+
+    def start_giu(self):
+        gui.GUI()
 
     @staticmethod
     def cc(self, a):
         logger.info('update pixbuf')
         # self.trayPixbuf = self.icon_.get_pixbuf()
         trayPixbuf = GdkPixbuf.Pixbuf.new_from_file(self.icon_img)
-        while a+1:
-            # logger.info('redraw pixbuf')
+        while a + 1:
             try:
-                new_p_buf = self.put_text(trayPixbuf, '%s' % a, 3, 3)
-                self.icon_.set_from_pixbuf(new_p_buf)
+                self.change_icon_pixbuf(self.put_text(trayPixbuf, '%s' % a, 3, 3))
             except:
+                logger.info('eror')
                 logger.error(traceback.format_exc())
-                self.icon_.set_from_file(self.icon_img)
+                self.change_icon_file(self.icon_img)
+            # else:
+            #     logger.info('set pic_ success')
             a -= 1
             time.sleep(1)
 
-        self.icon_.set_from_file(self.icon_img)
+        self.change_icon_file(self.icon_img)
 
     @staticmethod
     def put_text(pixbuf, text, x, y):
@@ -93,20 +113,33 @@ class Icon(object):
 
         return pixbuf
 
-    def count_down(self, c):
+    def count_down(self, c, demonise=True):
         logger.info('get task redraw pixbuf')
-        if not self.tr:
-
-            self.tr = True
-            Gdk.threads_init()
-        try:
-            Thread(target=self.cc, args=(self, c)).start()
-            # self.cc(c)
-        except:
-            logger.error(traceback.format_exc())
-        # self.cc()
+        if demonise:
+            try:
+                sst = Thread(target=self.cc, args=(self, c))
+                sst.setDaemon(1)
+                sst.start()
+                # self.cc(c)
+            except:
+                logger.error(traceback.format_exc())
+        else:
+            self.cc(self, c)
 
 
 if __name__ == '__main__':
-    Icon('images4.png', []).crearte_sys_tray_icon()
-    gtk.main()
+    i = Icon('images4.png', [])
+    i.crearte_sys_tray_icon()
+    # Gdk.threads_init()
+
+
+    def up(i):
+        time.sleep(1)
+        while 1:
+            i.count_down(5, False)
+
+
+    s = Thread(target=up, args=(i,))
+    s.start()
+    i.start_giu()
+

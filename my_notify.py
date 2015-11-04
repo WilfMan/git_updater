@@ -11,12 +11,16 @@ import re
 import time
 import subprocess
 import sys
+
 import gitParser
 from logs import logger
 from pull_all import pull_all_branches
 from sys_tray_menu import Icon
+
+
 # import notify2
 # notify2.init('icon-summary-body', 'glib')
+
 
 class BaseApp(object):
     def __init__(self):
@@ -29,11 +33,13 @@ class BaseApp(object):
         self.opt_branch = []
         self.opt_timeout = 60
         self.log.info('\n\nDaemon start\n\n')
+        self.img_path = None
         self._running = 1
-        self.config_parse()
         self.nn = []
         self.datata = []
+        self.config_parse()
         self.fire_notify('start')
+
         # notify2.init('icon-summary-body')
 
     def config_parse(self):
@@ -75,21 +81,15 @@ class BaseApp(object):
             try:
                 self.run_in_thread(self.updater, daemon='no')
                 self.create_icon()
-                Gdk.threads_init()
-                gtk.main()
             except:
-
                 self.log.info(traceback.format_exc())
 
     def updater(self):
         while self._running:
             self.log.info('run check in thread by timeout %s' % self.opt_timeout)
-            self.check(False)
+            self.check()
             if self.icon is not None:
-                # self.fire_notify('start countdown')
-                self.icon.tr = True
-                self.icon.count_down(self.opt_timeout)
-            time.sleep(self.opt_timeout)
+                self.icon.count_down(self.opt_timeout, False)
 
     def update_branches(self, path):
         try:
@@ -113,6 +113,7 @@ class BaseApp(object):
             self.icon = Icon(self.img_path, br)
             self.icon.reload_command = 'kill %s' % os.getpid()
             self.icon.crearte_sys_tray_icon()
+            self.icon.start_giu()
         else:
             self.log.error('no img path:%s' % self.img_path)
             raise Exception('no image')
@@ -122,9 +123,13 @@ class BaseApp(object):
             join = False
             if 'join' in k:
                 join = k.pop('join')
+            dd = 'y'
+            if 'daemon' in k:
+                dd = k.pop('daemon')
             self.log.info(str(k))
             tr = threading.Thread(target=target, args=a, kwargs=k)
-            if k.pop('daemon') != 'no':
+
+            if dd == 'y':
                 tr.setDaemon(1)
             tr.start()
             self.log.info('join: %s' % join)
@@ -136,7 +141,7 @@ class BaseApp(object):
             self.log.info('thread created')
 
     # @staticmethod
-    def call_back_fire(self, notif, action, data=None):
+    def call_back_fire(self, _, action, data=None):
         self.log.info('callback %s,   %s' % (action, data))
         self.run_in_thread(pull_all_branches, data)
         self.fire_notify('check %s' % data)
@@ -280,6 +285,23 @@ class BaseApp(object):
 
 
 if __name__ == '__main__':
+    def proc_exist(name):
+        try:
+            process = subprocess.Popen(stdout=-1, args='ps x|grep %s|grep -v grep|grep -v Z' % name, shell=True)
+            output, _ = process.communicate()
+            process.poll()
+            if output:
+                return set(i.split()[0] for i in output.rstrip('\n').split('\n'))
+            return set()
+        except:
+            return set()
+
+    ppe = proc_exist(__file__)
+    pid = {str(os.getpid()), }
+    if ppe - pid:
+        logger.info('found %s process' % (ppe - pid))
+        sys.exit(1)
+
     pidfile = tempfile.gettempdir() + '/daemonGitPushNotify.pid'
     pid = str(os.getpid())
     with open(pidfile, 'w') as pf:
