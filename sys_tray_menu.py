@@ -25,7 +25,7 @@ class Icon(object):
 
     @staticmethod
     def close_app(*args, **kwargs):
-        print 'closing'
+        logger.info('closing')
         os.system('kill -9 %s' % os.getpid())
 
     def make_menu(self, icon, event_button, event_time):

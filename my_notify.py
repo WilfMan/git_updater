@@ -105,12 +105,22 @@ class BaseApp(object):
         finally:
             self.log.info('exit from updater')
 
+    @staticmethod
+    def close(*a, **kwargs):
+        logger.info('close in myapp')
+        subprocess.call(['python', '%s/watcher.py' % os.path.split(os.path.abspath(__file__))[0]])
+
     def create_icon(self):
         br = []
         for repo in self.opt_repository:
             br.append(['Check: %s' % repo.split('/')[-1], self.call_back_menu, (repo, repo.split('/')[-1])])
         if os.path.exists(self.img_path):
-            self.icon = Icon(self.img_path, br)
+
+            class I(Icon):
+                def close_app(*args, **kwargs):
+                    self.close()
+
+            self.icon = I(self.img_path, br)
             self.icon.reload_command = 'kill %s' % os.getpid()
             self.icon.crearte_sys_tray_icon()
             self.icon.start_giu()
