@@ -55,6 +55,7 @@ def proc_exist(name):
 
 
 def main():
+    # subprocess.Popen(['export', 'DISPLAY=:0'])
     logger.info('check status')
     status = check_status(info)
     logger.info('status= %s' % status)
