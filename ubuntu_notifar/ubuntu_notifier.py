@@ -74,7 +74,7 @@ class Indicator(object):
         gtk.main()
 
     def change_icon(self, file_):
-        logger.info('update from file')
+        # logger.info('update from file')
         # self.icon_.set_icon(file_)
         # self.menu.show_all()
         GLib.idle_add(
@@ -103,7 +103,7 @@ class Indicator(object):
                     p = self.put_text(trayPixbuf, '%s' % a, 3, 3)
                     p.savev(self.get_full_path('ico', 'test%s.png' % a), "png", [], [])
                 self.change_icon(self.get_full_path('ico','test%s.png' % a))
-                logger.info(a)
+                # logger.info(a)
             except:
                 logger.info('eror')
                 logger.error(traceback.format_exc())
