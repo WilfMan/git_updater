@@ -15,7 +15,7 @@ import sys
 import gitParser
 from logs import logger
 from pull_all import pull_all_branches
-from ubuntu_notifier import Indicator
+from ubuntu_indicator import Indicator
 
 
 # import notify2
@@ -129,6 +129,7 @@ class BaseApp(object):
             raise Exception('no image')
 
     def run_in_thread(self, target, *a, **k):
+        self.log.info('%s %s' % (target, str(k)))
         try:
             join = False
             if 'join' in k:
@@ -136,13 +137,12 @@ class BaseApp(object):
             dd = 'y'
             if 'daemon' in k:
                 dd = k.pop('daemon')
-            self.log.info(str(k))
             tr = threading.Thread(target=target, args=a, kwargs=k)
 
             if dd == 'y':
                 tr.setDaemon(1)
             tr.start()
-            self.log.info('join: %s' % join)
+            # self.log.info('join: %s' % join)
             if join:
                 tr.join()
         except:
@@ -218,13 +218,13 @@ class BaseApp(object):
             self.log.info('no changes path: %s' % repository_path)
             return
 
-        self.log.info('changes: %s', s)
-
+        # self.log.info('changes: \n%s', s)
+        # s = s.encode('utf-8')
         branches_list = s.split('\n')
         if self.opt_branch:
-            branches_list = [i for i in s.split('\n') if self.opt_branch in i]
+            branches_list = [i for i in s.split('\n') if self.opt_branch in i if i]
 
-        self.log.info('branches_list: %s' % json.dumps(branches_list))
+        self.log.info('branches list whith changes: \n%s' % '\n'.join(branches_list))
 
         count_commits = 0
         message = ''
