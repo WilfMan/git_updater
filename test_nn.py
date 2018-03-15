@@ -8,8 +8,8 @@ import subprocess
 import time
 
 dir_ = os.path.dirname(__file__)
-habr = ['habrahabr', 'https://habrahabr.ru/rss/all/', '/home/wilf/work/notifaer/favicon-16x16.png']
-geek = ['geektimes', 'https://geektimes.ru/rss/all/', '/home/wilf/work/notifaer/geek.png']
+habr = ['habrahabr', 'https://habrahabr.ru/rss/all/', '/home/vilf/work/notifaer/favicon-16x16.png']
+geek = ['geektimes', 'https://geektimes.ru/rss/all/', '/home/vilf/work/notifaer/geek.png']
 urls = [habr, geek]
 
 

@@ -7,9 +7,11 @@
 
 from logs import logger as logging
 import traceback
-import pygtk
-
-pygtk.require('2.0')
+# import pygtk
+#
+# pygtk.require('2.0')
+import gi
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk, Gdk as gdk
 
 # settings = gtk.settings_get_default()

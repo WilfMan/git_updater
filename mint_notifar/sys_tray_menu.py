@@ -2,7 +2,10 @@
 import cairo
 import os
 import gui
+import gi
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk, Gdk, GdkPixbuf
+from gi.repository import AppIndicator3 as appindicator
 from threading import Thread
 import time
 import traceback
@@ -19,7 +22,7 @@ class Icon(object):
         self.menu = None
         self.icon_ = None
         self.icon_img = img
-        self.reload_command = 'cd /home/wilfman/notifaer/new && python sys_tray_menu.py'
+        self.reload_command = 'cd /home/vilf/work/notifaer/new && python sys_tray_menu.py'
         self.tr = False
         self.trayPixbuf = None
 
@@ -62,13 +65,17 @@ class Icon(object):
 
     def set_icon(self, icon):
         with gui.GtkLocker:
-            icon_ = gtk.StatusIcon()
-            icon_.set_from_file(icon)
-        return icon_
+            indicator = appindicator.Indicator.new('APPINDICATOR_ID', 'whatever',
+                                                   appindicator.IndicatorCategory.SYSTEM_SERVICES)
+            indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
+            # icon_ = gtk.StatusIcon()
+            # icon_.set_from_file(icon)
+            indicator.set_icon(icon)
+        return indicator
 
     def crearte_sys_tray_icon(self):
         self.icon_ = self.set_icon(self.icon_img)
-        self.icon_.connect('popup-menu', self.make_menu)
+        # self.icon_.connect('popup-menu', self.make_menu)
 
     def start_giu(self):
         gui.GUI()
